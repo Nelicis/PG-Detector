@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PG Detector | Polyglot &amp; Binary Forensic Inspector</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top-bar">
+    <div class="brand-group">
+      <span class="brand-badge">PG DETECTOR</span>
+      <span class="brand-subtitle">CLIENT-SIDE POLYGLOT &amp; BINARY FORENSIC INSPECTOR</span>
+    </div>
+    <div class="privacy-pill">LOCAL MEMORY EXECUTION // ZERO SERVER UPLOADS</div>
+  </header>
+
+  <main class="workspace">
+    <section class="ingest-panel">
+      <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Upload or drop a file to inspect">
+        <div class="drop-title">DROP FILE FOR BINARY INSPECTION</div>
+        <div class="drop-hint">Or click to select any image, archive, document, or binary file (processed 100% locally in browser memory)</div>
+        <input type="file" id="file-input" hidden>
+      </div>
+
+      <div class="sample-bar">
+        <span class="sample-label">SYNTHETIC TEST VECTORS:</span>
+        <div class="sample-buttons">
+          <button type="button" class="sample-btn" data-sample="png-zip">PNG + ZIP Polyglot</button>
+          <button type="button" class="sample-btn" data-sample="gif-js">GIF89a + JS Polyglot</button>
+          <button type="button" class="sample-btn" data-sample="jpeg-php">JPEG + PHP Payload</button>
+          <button type="button" class="sample-btn" data-sample="clean-png">Clean PNG Baseline</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="inspector-shell">
+      <div class="file-meta-strip">
+        <div class="meta-item">
+          <span class="meta-key">TARGET FILE</span>
+          <span id="meta-filename" class="meta-val">avatar_bundle.png</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-key">SIZE</span>
+          <span id="meta-filesize" class="meta-val">0 B</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-key">PRIMARY CONTAINER</span>
+          <span id="meta-primary" class="meta-val">NONE</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-key">SHANNON ENTROPY</span>
+          <span id="meta-entropy" class="meta-val">0.000 bits/byte</span>
+        </div>
+      </div>
+
+      <nav class="mode-tabs" role="tablist">
+        <button type="button" id="tab-btn-scanner" class="mode-tab active" data-tab="scanner" role="tab" aria-selected="true">
+          Threat Scanner
+        </button>
+        <button type="button" id="tab-btn-lab" class="mode-tab" data-tab="lab" role="tab" aria-selected="false">
+          Forensic Hex &amp; Entropy Lab
+        </button>
+      </nav>
+
+      <div id="panel-scanner" class="tab-panel active" role="tabpanel">
+        <div id="verdict-banner" class="verdict-banner verdict-clean">
+          <div class="verdict-left">
+            <div class="verdict-tag-row">
+              <span class="verdict-label">VERDICT</span>
+              <span id="verdict-status" class="verdict-status">CLEAN</span>
+            </div>
+            <p id="verdict-summary" class="verdict-summary">Select or drop a file to begin structural analysis.</p>
+          </div>
+          <div class="verdict-right">
+            <div class="risk-box">
+              <span class="risk-label">RISK INDEX</span>
+              <span id="risk-score" class="risk-score">0 / 100</span>
+            </div>
+            <button type="button" id="sanitize-btn" class="action-btn sanitize-btn" hidden>
+              Export Sanitized File
+            </button>
+            <button type="button" id="open-lab-btn" class="action-btn secondary-btn">
+              Open Forensic Hex Lab
+            </button>
+          </div>
+        </div>
+
+        <div class="card-block">
+          <div class="section-header">
+            <h2>STRUCTURAL BYTE LAYOUT MAP</h2>
+            <span id="region-summary-label" class="section-sub">Proportional container vs. appended payload map</span>
+          </div>
+          <div id="byte-layout-bar" class="byte-layout-bar"></div>
+          <div id="byte-layout-legend" class="byte-layout-legend"></div>
+        </div>
+
+        <div class="card-block">
+          <div class="section-header">
+            <h2>DETECTED SIGNATURES &amp; STRUCTURAL BOUNDARIES</h2>
+            <span class="section-sub">Click any signature row to inspect its exact byte offset in the Hex Lab</span>
+          </div>
+          <div class="table-wrap">
+            <table class="forensic-table">
+              <thead>
+                <tr>
+                  <th>ROLE</th>
+                  <th>FORMAT / MARKER</th>
+                  <th>OFFSET (HEX / DEC)</th>
+                  <th>MAGIC BYTES</th>
+                  <th>FORENSIC NOTE</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="signatures-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-lab" class="tab-panel" role="tabpanel" hidden>
+        <div class="card-block">
+          <div class="section-header">
+            <h2>BLOCK-LEVEL SHANNON ENTROPY DISTRIBUTION (0.00 - 8.00 BITS/BYTE)</h2>
+            <span class="section-sub">Click any bar to jump the hex viewer to that byte block. High entropy (&gt; 6.8) indicates compressed or encrypted streams.</span>
+          </div>
+          <div class="entropy-canvas-wrap">
+            <canvas id="entropy-canvas" width="960" height="160"></canvas>
+          </div>
+          <div class="entropy-legend">
+            <span class="legend-item"><span class="swatch swatch-low"></span>LOW (&lt; 3.5 bits/byte: text, padding, headers)</span>
+            <span class="legend-item"><span class="swatch swatch-med"></span>MEDIUM (3.5 - 6.8 bits/byte: structured code/data)</span>
+            <span class="legend-item"><span class="swatch swatch-high"></span>HIGH (&gt; 6.8 bits/byte: compressed archive or encrypted payload)</span>
+          </div>
+        </div>
+
+        <div class="lab-split">
+          <div class="card-block hex-card">
+            <div class="hex-toolbar">
+              <div class="hex-nav-group">
+                <button type="button" id="hex-prev-btn" class="hex-nav-btn">Prev 1 KB</button>
+                <button type="button" id="hex-next-btn" class="hex-nav-btn">Next 1 KB</button>
+                <span id="hex-range-label" class="hex-range-label">0x00000000 - 0x000003FF</span>
+              </div>
+              <form id="hex-jump-form" class="hex-jump-form">
+                <label for="hex-offset-input">OFFSET (HEX):</label>
+                <input type="text" id="hex-offset-input" placeholder="0x0000" spellcheck="false">
+                <button type="submit" class="hex-nav-btn">Jump</button>
+              </form>
+            </div>
+
+            <div class="hex-viewer-wrap">
+              <table class="hex-table">
+                <thead>
+                  <tr>
+                    <th>OFFSET</th>
+                    <th>00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F</th>
+                    <th>ASCII</th>
+                  </tr>
+                </thead>
+                <tbody id="hex-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <aside class="card-block landmark-card">
+            <div class="section-header">
+              <h2>SIGNATURE BOOKMARKS</h2>
+              <span class="section-sub">Direct offset navigation</span>
+            </div>
+            <ul id="landmark-list" class="landmark-list"></ul>
+            <div class="highlight-key">
+              <div class="key-title">HEX HIGHLIGHT KEY</div>
+              <div class="key-row"><span class="swatch swatch-primary"></span>Primary Format Header</div>
+              <div class="key-row"><span class="swatch swatch-boundary"></span>True Container EOF Marker</div>
+              <div class="key-row"><span class="swatch swatch-secondary"></span>Secondary / Hidden Payload</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
